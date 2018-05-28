@@ -9,14 +9,16 @@ import java.io.FileInputStream;
 import javax.swing.JOptionPane;
 import java.util.*;
 import java.text.*;
+
+import com.sun.xml.internal.bind.v2.TODO;
 import org.fife.ui.rsyntaxtextarea.*;
+import utils.KMP;
 
 
 public class Editor extends JFrame {
 
-
     private String content;
-    //设置组件
+
     private JMenuBar menuBar;
     private JMenu fileMenu;
     private JMenu searchMenu;
@@ -24,52 +26,55 @@ public class Editor extends JFrame {
     private JMenu timeMenu;
     private RSyntaxTextArea textArea;
     private JScrollPane jScrollPane;
-    private JMenuItem openItem, closeItem, saveItem, searchItem, aboutItem, timeItem;
+    private JMenuItem createItem, openItem, closeItem, saveItem, findItem, replaceItem, timeItem, aboutItem;
     private FileDialog open, save;
     private File file;
 
 
-    Editor() {
+    private Editor() {
         Init();
     }
 
-    // 定义
-    public void setting(){
-        //设置应用的大小等设置
+
+    private void setting() {
+
         JFrame frame = new JFrame("记事本");
         frame.setBounds(300, 300, 1280, 720);
         frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
 
         menuBar = new JMenuBar();
-        searchMenu = new JMenu("搜索");
         fileMenu = new JMenu("文件");
-        helpMenu = new JMenu("帮助");
+        searchMenu = new JMenu("搜索");
         timeMenu = new JMenu("时间");
+        helpMenu = new JMenu("帮助");
 
-        // 记事本页面的设置
         textArea = new RSyntaxTextArea(20, 60);
         jScrollPane = new JScrollPane(textArea);
         jScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         jScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         jScrollPane.setViewportView(textArea);
 
+        createItem = new JMenuItem("新建");
         openItem = new JMenuItem("打开");
         saveItem = new JMenuItem("保存");
         closeItem = new JMenuItem("关闭");
-        searchItem = new JMenuItem("搜索");
-        timeItem = new JMenuItem("插入当前时间");
+        findItem = new JMenuItem("搜索");
+        replaceItem = new JMenuItem("替换");
         aboutItem = new JMenuItem("关于");
+        timeItem = new JMenuItem("插入当前时间");
 
         menuBar.add(fileMenu);
         menuBar.add(searchMenu);
         menuBar.add(helpMenu);
         menuBar.add(timeMenu);
+        fileMenu.add(createItem);
         fileMenu.add(openItem);
         fileMenu.add(saveItem);
         fileMenu.add(closeItem);
-        searchMenu.add(searchItem);
-        helpMenu.add(aboutItem);
+        searchMenu.add(findItem);
+        searchMenu.add(replaceItem);
         timeMenu.add(timeItem);
+        helpMenu.add(aboutItem);
 
         frame.add(menuBar, BorderLayout.NORTH);
         frame.add(jScrollPane, BorderLayout.CENTER);
@@ -79,20 +84,22 @@ public class Editor extends JFrame {
         frame.setVisible(true);
     }
 
-    // 初始化
-    public void Init() {
+
+    private void Init() {
         setting();
         close();
+        create();
         open();
         save();
-        search();
-        about();
+        find();
+        replace();
         time();
+        about();
     }
 
     // "关闭"
-    public void close() {
-        closeItem.addActionListener(new ActionListener(){
+    private void close() {
+        closeItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.exit(0);
@@ -101,7 +108,7 @@ public class Editor extends JFrame {
     }
 
     // "打开"
-    public void open() {
+    private void open() {
         openItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 open.setVisible(true);
@@ -113,7 +120,7 @@ public class Editor extends JFrame {
                 textArea.setText("");
                 file = new File(path, fileName);
                 try {
-                    if (fileName.indexOf(".java") != -1) {
+                    if (fileName.contains(".java")) {
                         textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
                     } else {
                         textArea.setSyntaxEditingStyle(null);
@@ -134,7 +141,7 @@ public class Editor extends JFrame {
     }
 
     // "保存"
-    public void save(){
+    private void save() {
         saveItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (file == null) {
@@ -158,44 +165,82 @@ public class Editor extends JFrame {
         });
     }
 
+    // "新建"
+    private void create() {
+        createItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                new Editor();
+            }
+        });
+    }
+
     // "搜索"
-    public void search(){
-        searchItem.addActionListener(new ActionListener() {
+    private void find() {
+        findItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String s = JOptionPane.showInputDialog("输入查找的内容", JOptionPane.YES_NO_CANCEL_OPTION);
-                String z = JOptionPane.showInputDialog("输入替换的内容", JOptionPane.YES_NO_CANCEL_OPTION);
-                int yes = JOptionPane.showConfirmDialog(null, "确定替换","取消", JOptionPane.YES_NO_CANCEL_OPTION);
                 content = textArea.getText();
-                if (yes == JOptionPane.YES_OPTION){
-                    if (content.indexOf(s) != -1){
-                        content = content.replace(s, z);
-                        textArea.setText(content);
+                // TODO, 增加对多个搜索的支持
+                KMP kmp = new KMP();
+                for (; ; ) {
+                    if (kmp.kmp(content, s) == -1) {
+                        break;
+                    } else {
+                        int start = kmp.kmp(content, s);
+                        int end = start + s.length();
+                        if (end > content.length()) break;
+                        // 只支持单个光标的操作
+                        textArea.setSelectionStart(start);
+                        textArea.setSelectionEnd(end);
+                        content = content.substring(end);
                     }
                 }
             }
         });
     }
 
-    // "关于"
-    public void about() {
-        aboutItem.addActionListener(new ActionListener() {
+    // "替换"
+    private void replace() {
+        replaceItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(null, "记事本");
+                String s = JOptionPane.showInputDialog("输入查找的内容", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (s != null) {
+                    String z = JOptionPane.showInputDialog("输入替换的内容", JOptionPane.YES_NO_CANCEL_OPTION);
+                    int yes = JOptionPane.showConfirmDialog(null, "确定替换", "取消", JOptionPane.YES_NO_CANCEL_OPTION);
+                    content = textArea.getText();
+                    if (yes == JOptionPane.YES_OPTION) {
+                        if (content.contains(s)) {
+                            System.out.println(content.contains(s));
+                            content = content.replace(s, z);
+                            textArea.setText(content);
+                        }
+                    }
+                }
             }
         });
     }
 
     // "插入时间"
-    public void time(){
+    private void time() {
         timeItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Date date = new Date();
-                SimpleDateFormat ft = new SimpleDateFormat ("yyyy.MM.dd'/'hh:mm:ss");
+                SimpleDateFormat ft = new SimpleDateFormat("yyyy.MM.dd'/'HH:mm:ss");
                 content = textArea.getText() + ft.format(date);
                 textArea.setText(content);
+            }
+        });
+    }
+
+    // "关于"
+    private void about() {
+        aboutItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(null, "记事本\nby: ryoua & bgmnbear");
             }
         });
     }
