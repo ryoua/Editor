@@ -10,7 +10,6 @@ import javax.swing.JOptionPane;
 import java.util.*;
 import java.text.*;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import org.fife.ui.rsyntaxtextarea.*;
 import utils.KMP;
 
@@ -87,27 +86,27 @@ public class Editor extends JFrame {
 
     private void Init() {
         setting();
-        close();
         create();
         open();
         save();
+        close();
         find();
         replace();
         time();
         about();
     }
 
-    // "关闭"
-    private void close() {
-        closeItem.addActionListener(new ActionListener() {
-            @Override
+    // "新建"
+    private void create() {
+        createItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                System.exit(0);
+                new Editor();
             }
         });
     }
 
     // "打开"
+    // TODO, 增加读取二进制文件功能
     private void open() {
         openItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -165,11 +164,12 @@ public class Editor extends JFrame {
         });
     }
 
-    // "新建"
-    private void create() {
-        createItem.addActionListener(new ActionListener() {
+    // "关闭"
+    private void close() {
+        closeItem.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
-                new Editor();
+                System.exit(0);
             }
         });
     }
@@ -179,10 +179,12 @@ public class Editor extends JFrame {
         findItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("输入查找的内容", JOptionPane.YES_NO_CANCEL_OPTION);
-                content = textArea.getText();
-                // TODO, 增加对多个搜索的支持
+                int a[][] = new int[99][2];
+                String s = JOptionPane.showInputDialog("输入查找的内容", null);
                 KMP kmp = new KMP();
+                content = textArea.getText();
+                int i = 0;
+                int offset = 0;
                 for (; ; ) {
                     if (kmp.kmp(content, s) == -1) {
                         break;
@@ -190,11 +192,31 @@ public class Editor extends JFrame {
                         int start = kmp.kmp(content, s);
                         int end = start + s.length();
                         if (end > content.length()) break;
-                        // 只支持单个光标的操作
-                        textArea.setSelectionStart(start);
-                        textArea.setSelectionEnd(end);
+                        if (i == 0) {
+                            textArea.setSelectionStart(start);
+                            textArea.setSelectionEnd(end);
+                        }
+
+                        a[i][0] = start + offset;
+                        a[i][1] = end + offset;
+
                         content = content.substring(end);
+                        offset += end;
+                        i++;
                     }
+                }
+
+                int j = 0;
+                while (i > 0) {
+                    int yes = JOptionPane.showConfirmDialog(null, "下一个?", "取消", JOptionPane.YES_NO_CANCEL_OPTION);
+                    if (yes == JOptionPane.YES_OPTION) {
+                        textArea.setSelectionStart(a[j + 1][0]);
+                        textArea.setSelectionEnd(a[j + 1][1]);
+                        j++;
+                    } else {
+                        break;
+                    }
+                    i--;
                 }
             }
         });
@@ -205,14 +227,13 @@ public class Editor extends JFrame {
         replaceItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String s = JOptionPane.showInputDialog("输入查找的内容", JOptionPane.YES_NO_CANCEL_OPTION);
+                String s = JOptionPane.showInputDialog("输入查找的内容", null);
                 if (s != null) {
-                    String z = JOptionPane.showInputDialog("输入替换的内容", JOptionPane.YES_NO_CANCEL_OPTION);
+                    String z = JOptionPane.showInputDialog("输入替换的内容", null);
                     int yes = JOptionPane.showConfirmDialog(null, "确定替换", "取消", JOptionPane.YES_NO_CANCEL_OPTION);
                     content = textArea.getText();
                     if (yes == JOptionPane.YES_OPTION) {
                         if (content.contains(s)) {
-                            System.out.println(content.contains(s));
                             content = content.replace(s, z);
                             textArea.setText(content);
                         }
