@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.FileInputStream;
 import javax.swing.JOptionPane;
+import java.nio.file.Files;
 import java.util.*;
 import java.text.*;
 
@@ -16,6 +17,7 @@ import utils.KMP;
 
 public class Editor extends JFrame {
 
+    private static final int MAX_CONTENT_LENGTH = 10000000;
     private String content;
 
     private JMenuBar menuBar;
@@ -25,13 +27,13 @@ public class Editor extends JFrame {
     private JMenu timeMenu;
     private RSyntaxTextArea textArea;
     private JScrollPane jScrollPane;
-    private JMenuItem createItem, openItem, closeItem, saveItem, findItem, replaceItem, timeItem, aboutItem;
+    private JMenuItem createItem, openItem, saveItem, closeItem, findItem, replaceItem, timeItem, aboutItem;
     private FileDialog open, save;
     private File file;
 
 
     private Editor() {
-        Init();
+        init();
     }
 
 
@@ -59,13 +61,13 @@ public class Editor extends JFrame {
         closeItem = new JMenuItem("关闭");
         findItem = new JMenuItem("搜索");
         replaceItem = new JMenuItem("替换");
-        aboutItem = new JMenuItem("关于");
         timeItem = new JMenuItem("插入当前时间");
+        aboutItem = new JMenuItem("关于");
 
         menuBar.add(fileMenu);
         menuBar.add(searchMenu);
-        menuBar.add(helpMenu);
         menuBar.add(timeMenu);
+        menuBar.add(helpMenu);
         fileMenu.add(createItem);
         fileMenu.add(openItem);
         fileMenu.add(saveItem);
@@ -84,7 +86,7 @@ public class Editor extends JFrame {
     }
 
 
-    private void Init() {
+    private void init() {
         setting();
         create();
         open();
@@ -106,24 +108,47 @@ public class Editor extends JFrame {
     }
 
     // "打开"
-    // TODO, 增加读取二进制文件功能
     private void open() {
         openItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 open.setVisible(true);
                 String path = open.getDirectory();
                 String fileName = open.getFile();
-                if (path == null || fileName == null) {
-                    return;
-                }
+                if (path == null || fileName == null) return;
+
                 textArea.setText("");
                 file = new File(path, fileName);
                 try {
+                    // .java 文件语法高亮
                     if (fileName.contains(".java")) {
                         textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
                     } else {
                         textArea.setSyntaxEditingStyle(null);
                     }
+
+                    // 对 .bin 文件进行读操作并格式化
+                    if (fileName.contains(".bin")) {
+                        FileInputStream in;
+                        DataInputStream dis;
+                        content = "";
+                        try {
+                            in = new FileInputStream(path + fileName);
+                            dis = new DataInputStream(in);
+                            while (dis.available() != 0) {
+                                for (int i = 1; i < MAX_CONTENT_LENGTH; i++) {
+                                    content += dis.readByte();
+                                    if (i % 4 == 0) {
+                                        content += "\n";
+                                    }
+                                }
+                            }
+                            dis.close();
+                        } catch (Exception e1) {
+                            System.out.println(e1.toString());
+                        }
+                        textArea.setText(content);
+                    }
+
                     FileInputStream fr = new FileInputStream(file);
                     InputStreamReader b = new InputStreamReader(fr, "gb2312");
                     BufferedReader br = new BufferedReader(b);
@@ -134,7 +159,8 @@ public class Editor extends JFrame {
                 } catch (IOException ie) {
                     throw new RuntimeException("读取失败！");
                 }
-                content = textArea.getText();
+
+
             }
         });
     }
@@ -207,7 +233,7 @@ public class Editor extends JFrame {
                 }
 
                 int j = 0;
-                while (i > 0) {
+                while (i > 1) {
                     int yes = JOptionPane.showConfirmDialog(null, "下一个?", "取消", JOptionPane.YES_NO_CANCEL_OPTION);
                     if (yes == JOptionPane.YES_OPTION) {
                         textArea.setSelectionStart(a[j + 1][0]);
