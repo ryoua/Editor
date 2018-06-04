@@ -134,6 +134,32 @@ public class Editor extends JFrame {
                 } catch (IOException ie) {
                     throw new RuntimeException("读取失败！");
                 }
+
+                // 对二进制bin文件进行读操作
+               if (fileName.contains(".bin")){
+                   FileInputStream in;
+                   DataInputStream dis;
+                   content = "";
+                   try {
+                       in = new FileInputStream(path+fileName);
+                       dis = new DataInputStream(in);
+                       while (dis.available() != 0) {
+                           for (int i = 1; i < 999999999; i++){
+                               content += dis.readByte();
+//                                 content += "     ";
+                               while (i % 20 == 0){
+                                   content += "\n";
+                                   break;
+                               }
+                           }
+                       }
+                       dis.close();
+                   } catch (Exception e1) {
+                       System.out.println(e1.toString());
+                   }
+                   textArea.setText(content);
+               }
+
                 content = textArea.getText();
             }
         });
