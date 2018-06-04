@@ -106,7 +106,6 @@ public class Editor extends JFrame {
     }
 
     // "打开"
-    // TODO, 增加读取二进制文件功能
     private void open() {
         openItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -146,7 +145,6 @@ public class Editor extends JFrame {
                        while (dis.available() != 0) {
                            for (int i = 1; i < 999999999; i++){
                                content += dis.readByte();
-//                                 content += "     ";
                                while (i % 20 == 0){
                                    content += "\n";
                                    break;
