@@ -159,12 +159,33 @@ public class Editor extends JFrame {
                 } catch (IOException ie) {
                     throw new RuntimeException("读取失败！");
                 }
-
-
             }
         });
     }
 
+     // 二进制读写的单元测试
+    private void test(){
+            FileInputStream in;
+            DataInputStream dis;
+            try {
+                DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream("C:\\Users\\SARA\\IdeaProjects\\Editor\\src\\test_app.bin")));
+                os.writeInt(1001);
+                os.flush();
+                os.close();
+
+
+                DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream("C:\\Users\\SARA\\IdeaProjects\\Editor\\src\\test_app.bin")));
+                if (is.readInt() == 1001){
+                    System.out.println("Test is OK:)");
+                } else {
+                    assert false;
+                }
+                is.close();
+            } catch (IOException e) {
+
+            }
+    }
+    
     // "保存"
     private void save() {
         saveItem.addActionListener(new ActionListener() {
